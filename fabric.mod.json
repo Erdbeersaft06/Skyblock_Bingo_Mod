@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "skyblockbingo",
+  "version": "${version}",
+  "name": "Skyblock Bingo",
+  "description": "Bingo mit HUD fuer Hypixel Skyblock: eigene Goals, 3x3 bis 7x7, Lockout, Timer und Multiplayer per Party-Code.",
+  "authors": [],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.skyblockbingo.BingoMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": ">=26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
