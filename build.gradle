@@ -9,6 +9,20 @@ base {
 	archivesName = project.archives_base_name
 }
 
+// Die Dateien liegen direkt im Hauptordner (nicht in src/main/...)
+sourceSets {
+	main {
+		java {
+			srcDirs = ['.']
+			include '*.java'
+		}
+		resources {
+			srcDirs = ['.']
+			include 'fabric.mod.json'
+		}
+	}
+}
+
 repositories {
 }
 
