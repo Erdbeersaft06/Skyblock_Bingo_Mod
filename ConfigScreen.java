@@ -7,20 +7,18 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /** Einstellungsmenue mit Reitern: Allgemein, Goals, Listen, Design, Spiel. */
 public final class ConfigScreen extends Screen {
 	private enum Tab {
-		ALLGEMEIN("Allgemein"), GOALS("Goals"), LISTEN("Listen"), DESIGN("Design"), SPIEL("Spiel");
+		ALLGEMEIN("tab.general"), GOALS("tab.goals"), LISTEN("tab.lists"), DESIGN("tab.design"), SPIEL("tab.game");
 
-		final String label;
+		final String key;
 
-		Tab(String label) {
-			this.label = label;
+		Tab(String key) {
+			this.key = key;
 		}
 	}
 
@@ -29,18 +27,6 @@ public final class ConfigScreen extends Screen {
 	private static final int ROW = 21;
 	private static final int WHITE = 0xFFFFFFFF;
 	private static final int GRAY = 0xFFBBBBBB;
-
-	private static final Map<String, String> COLOR_LABELS = new LinkedHashMap<>();
-
-	static {
-		COLOR_LABELS.put("bg", "Hintergrund");
-		COLOR_LABELS.put("cell", "Feld");
-		COLOR_LABELS.put("text", "Text");
-		COLOR_LABELS.put("muted", "Nebentext");
-		COLOR_LABELS.put("p0", "Spieler 1");
-		COLOR_LABELS.put("p1", "Spieler 2");
-		COLOR_LABELS.put("border", "Rahmen");
-	}
 
 	private static Tab current = Tab.ALLGEMEIN;
 	private static int goalPage = 0;
@@ -55,7 +41,7 @@ public final class ConfigScreen extends Screen {
 	private final List<String> listNames = new ArrayList<>();
 
 	public ConfigScreen() {
-		super(Component.literal("Skyblock Bingo - Einstellungen"));
+		super(Component.literal(Lang.t("menu.title")));
 	}
 
 	// ---------------------------------------------------------------- Aufbau
@@ -73,7 +59,7 @@ public final class ConfigScreen extends Screen {
 		Tab[] tabs = Tab.values();
 		for (int i = 0; i < tabs.length; i++) {
 			Tab t = tabs[i];
-			Button b = button(t.label, x0 + i * (tw + 4), 10, tw, () -> {
+			Button b = button(Lang.t(t.key), x0 + i * (tw + 4), 10, tw, () -> {
 				current = t;
 				this.rebuildWidgets();
 			});
@@ -88,7 +74,7 @@ public final class ConfigScreen extends Screen {
 			case SPIEL -> buildGame();
 		}
 
-		button("Schließen", (this.width - 120) / 2, this.height - 26, 120, this::onClose);
+		button(Lang.t("close"), (this.width - 120) / 2, this.height - 26, 120, this::onClose);
 	}
 
 	private Button button(String text, int x, int y, int w, Runnable action) {
@@ -114,14 +100,24 @@ public final class ConfigScreen extends Screen {
 		status = s;
 	}
 
-	// ---------------------------------------------------------------- Reiter: Allgemein
-
 	private static String onOff(boolean b) {
-		return b ? "An" : "Aus";
+		return Lang.t(b ? "onoff.on" : "onoff.off");
 	}
+
+	private static String colorLabel(String key) {
+		return switch (key) {
+			case "p0" -> Lang.t("player1");
+			case "p1" -> Lang.t("player2");
+			default -> Lang.t("color." + key);
+		};
+	}
+
+	// ---------------------------------------------------------------- Reiter: Allgemein
 
 	private void buildGeneral() {
 		Config cfg = Bingo.cfg;
+		int half = (W - 6) / 2;
+
 		button("-", x0 + W - 56, 44, 26, () -> {
 			cfg.size = Math.max(3, cfg.size - 1);
 			cfg.save();
@@ -130,22 +126,37 @@ public final class ConfigScreen extends Screen {
 			cfg.size = Math.min(7, cfg.size + 1);
 			cfg.save();
 		});
-		button("Lockout: " + onOff(cfg.lockout), x0, 70, W, (Button b) -> {
+
+		button(Lang.t("gen.lockout", onOff(cfg.lockout)), x0, 70, half, (Button b) -> {
 			cfg.lockout = !cfg.lockout;
 			cfg.save();
-			b.setMessage(Component.literal("Lockout: " + onOff(cfg.lockout)));
+			b.setMessage(Component.literal(Lang.t("gen.lockout", onOff(cfg.lockout))));
 		});
-		button("HUD sichtbar: " + onOff(cfg.hudVisible), x0, 96, W, (Button b) -> {
+		button(Lang.t("gen.hud", onOff(cfg.hudVisible)), x0 + half + 6, 70, half, (Button b) -> {
 			cfg.hudVisible = !cfg.hudVisible;
 			cfg.save();
-			b.setMessage(Component.literal("HUD sichtbar: " + onOff(cfg.hudVisible)));
+			b.setMessage(Component.literal(Lang.t("gen.hud", onOff(cfg.hudVisible))));
 		});
+
+		button(Lang.t("gen.invclick", onOff(cfg.inventoryClick)), x0, 96, half, (Button b) -> {
+			cfg.inventoryClick = !cfg.inventoryClick;
+			cfg.save();
+			b.setMessage(Component.literal(Lang.t("gen.invclick", onOff(cfg.inventoryClick))));
+		});
+		button(Lang.t("gen.lang", Lang.languageName()), x0 + half + 6, 96, half, () -> {
+			int next = (Lang.index() + 1) % Lang.CODES.size();
+			cfg.lang = Lang.CODES.get(next);
+			cfg.save();
+			this.rebuildWidgets();
+		});
+
 		nameBox = box(x0 + 110, 122, W - 110, cfg.name, 20, s -> cfg.name = s.trim());
-		button("HUD verschieben und Größe ändern", x0, 148, W, () -> {
+
+		button(Lang.t("gen.mover"), x0, 148, half, () -> {
 			cfg.save();
 			this.minecraft.gui.setScreen(new MoverScreen());
 		});
-		button("Board öffnen (Felder abhaken)", x0, 174, W, () -> {
+		button(Lang.t("gen.openboard"), x0 + half + 6, 148, half, () -> {
 			cfg.save();
 			this.minecraft.gui.setScreen(new BoardScreen());
 		});
@@ -156,7 +167,7 @@ public final class ConfigScreen extends Screen {
 	private void buildGoals() {
 		Config cfg = Bingo.cfg;
 		goalBox = box(x0, 44, W - 100, "", 200, null);
-		button("Hinzufügen", x0 + W - 96, 44, 96, () -> {
+		button(Lang.t("goals.add"), x0 + W - 96, 44, 96, () -> {
 			int added = 0;
 			for (String part : goalBox.getValue().split(";")) {
 				String g = part.trim();
@@ -168,7 +179,7 @@ public final class ConfigScreen extends Screen {
 				}
 			}
 			cfg.save();
-			setStatus(added + " Goal(s) hinzugefügt.");
+			setStatus(Lang.t("goals.added", added));
 			goalPage = Math.max(0, (cfg.goals.size() - 1) / PER_PAGE);
 			this.rebuildWidgets();
 		});
@@ -194,23 +205,23 @@ public final class ConfigScreen extends Screen {
 			goalPage = Math.min(pages - 1, goalPage + 1);
 			this.rebuildWidgets();
 		});
-		button("Beispiele laden", x0, py + 24, 154, () -> {
+		button(Lang.t("goals.examples"), x0, py + 24, 154, () -> {
 			int added = 0;
-			for (String g : BingoCommands.EXAMPLES) {
+			for (String g : Lang.examples()) {
 				if (!cfg.goals.contains(g)) {
 					cfg.goals.add(g);
 					added++;
 				}
 			}
 			cfg.save();
-			setStatus(added + " Beispiel-Goals hinzugefügt.");
+			setStatus(Lang.t("goals.example_added", added));
 			this.rebuildWidgets();
 		});
-		button("Alle löschen", x0 + W - 154, py + 24, 154, () -> {
+		button(Lang.t("goals.clear"), x0 + W - 154, py + 24, 154, () -> {
 			cfg.goals.clear();
 			cfg.save();
 			goalPage = 0;
-			setStatus("Alle Goals gelöscht.");
+			setStatus(Lang.t("goals.cleared"));
 			this.rebuildWidgets();
 		});
 	}
@@ -223,19 +234,19 @@ public final class ConfigScreen extends Screen {
 		listNames.addAll(cfg.lists.keySet());
 
 		listBox = box(x0, 44, W - 100, "", 30, null);
-		button("Speichern", x0 + W - 96, 44, 96, () -> {
+		button(Lang.t("lists.save"), x0 + W - 96, 44, 96, () -> {
 			String n = listBox.getValue().trim();
 			if (n.isEmpty()) {
-				setStatus("Bitte einen Namen für die Liste eingeben.");
+				setStatus(Lang.t("lists.noname"));
 				return;
 			}
 			if (cfg.goals.isEmpty()) {
-				setStatus("Es gibt noch keine Goals zum Speichern.");
+				setStatus(Lang.t("lists.nogoals"));
 				return;
 			}
 			cfg.lists.put(n, new ArrayList<>(cfg.goals));
 			cfg.save();
-			setStatus("Liste '" + n + "' gespeichert (" + cfg.goals.size() + " Goals).");
+			setStatus(Lang.t("lists.saved", n, cfg.goals.size()));
 			this.rebuildWidgets();
 		});
 
@@ -247,18 +258,18 @@ public final class ConfigScreen extends Screen {
 			if (idx >= listNames.size()) break;
 			String name = listNames.get(idx);
 			int y = 70 + r * ROW;
-			button("Laden", x0 + W - 128, y, 60, () -> {
+			button(Lang.t("lists.load"), x0 + W - 138, y, 66, () -> {
 				List<String> l = cfg.lists.get(name);
 				if (l != null) {
 					cfg.goals = new ArrayList<>(l);
 					cfg.save();
-					setStatus("Liste '" + name + "' geladen (" + l.size() + " Goals).");
+					setStatus(Lang.t("lists.loaded", name, l.size()));
 				}
 			});
-			button("Löschen", x0 + W - 64, y, 64, () -> {
+			button(Lang.t("lists.delete"), x0 + W - 68, y, 68, () -> {
 				cfg.lists.remove(name);
 				cfg.save();
-				setStatus("Liste '" + name + "' gelöscht.");
+				setStatus(Lang.t("lists.deleted", name));
 				this.rebuildWidgets();
 			});
 		}
@@ -278,7 +289,7 @@ public final class ConfigScreen extends Screen {
 	private void buildDesign() {
 		Config cfg = Bingo.cfg;
 		String[] themes = {"dark", "light", "custom"};
-		String[] labels = {"Dunkel", "Hell", "Eigene Farben"};
+		String[] labels = {Lang.t("theme.dark"), Lang.t("theme.light"), Lang.t("theme.custom_long")};
 		for (int i = 0; i < 3; i++) {
 			String t = themes[i];
 			Button b = button(labels[i], x0 + i * 110, 44, 100, () -> {
@@ -292,7 +303,7 @@ public final class ConfigScreen extends Screen {
 
 		Palette pal = Palette.of(cfg);
 		int i = 0;
-		for (String key : COLOR_LABELS.keySet()) {
+		for (String key : Palette.KEYS) {
 			int cx = x0 + (i / 4) * 165;
 			int y = 78 + (i % 4) * 26;
 			box(cx + 72, y, 56, Palette.hexOf(pal, key), 7, s -> {
@@ -305,7 +316,7 @@ public final class ConfigScreen extends Screen {
 			});
 			i++;
 		}
-		button("HUD verschieben und Größe ändern", x0, 190, W, () -> {
+		button(Lang.t("gen.mover"), x0, 190, W, () -> {
 			cfg.save();
 			this.minecraft.gui.setScreen(new MoverScreen());
 		});
@@ -315,28 +326,28 @@ public final class ConfigScreen extends Screen {
 
 	private void buildGame() {
 		int half = (W - 8) / 2;
-		button("Alleine spielen", x0, 44, half, () -> {
+		button(Lang.t("game.solo"), x0, 44, half, () -> {
 			Bingo.startSolo();
-			setStatus("Solo-Modus. Drücke \"Runde starten\".");
+			setStatus(Lang.t("game.solo_status"));
 		});
-		button("Party erstellen", x0 + half + 8, 44, half, () -> {
+		button(Lang.t("game.host"), x0 + half + 8, 44, half, () -> {
 			String code = Bingo.startHost();
-			setStatus("Party-Code: " + code + " (Mitspieler gibt ihn bei \"Beitreten\" ein)");
+			setStatus(Lang.t("game.host_status", code));
 		});
 
-		codeBox = box(x0 + 40, 70, 90, "", 6, null);
-		button("Beitreten", x0 + 136, 70, 100, () -> {
+		codeBox = box(x0 + 48, 70, 90, "", 6, null);
+		button(Lang.t("game.join"), x0 + 144, 70, 100, () -> {
 			String c = codeBox.getValue().trim();
 			if (c.length() != 6) {
-				setStatus("Der Party-Code hat 6 Zeichen.");
+				setStatus(Lang.t("game.code_len"));
 				return;
 			}
 			Bingo.join(c);
-			setStatus("Verbinde mit Party " + c.toUpperCase() + " ...");
+			setStatus(Lang.t("game.joining", c.toUpperCase()));
 		});
 
 		int third = (W - 12) / 3;
-		button("Runde starten", x0, 96, third, () -> {
+		button(Lang.t("game.start"), x0, 96, third, () -> {
 			String err = Bingo.startGame();
 			if (err != null) {
 				setStatus(err);
@@ -344,15 +355,15 @@ public final class ConfigScreen extends Screen {
 				this.minecraft.gui.setScreen(new BoardScreen());
 			}
 		});
-		button("Runde beenden", x0 + third + 6, 96, third, () -> {
+		button(Lang.t("game.end"), x0 + third + 6, 96, third, () -> {
 			Bingo.endGame();
-			setStatus("Runde beendet.");
+			setStatus(Lang.t("game.ended"));
 		});
-		button("Verlassen", x0 + (third + 6) * 2, 96, third, () -> {
+		button(Lang.t("game.leave"), x0 + (third + 6) * 2, 96, third, () -> {
 			Bingo.leave();
-			setStatus("Spiel verlassen.");
+			setStatus(Lang.t("game.left"));
 		});
-		button("Board öffnen (Felder abhaken)", x0, 122, W, () -> this.minecraft.gui.setScreen(new BoardScreen()));
+		button(Lang.t("gen.openboard"), x0, 122, W, () -> this.minecraft.gui.setScreen(new BoardScreen()));
 	}
 
 	// ---------------------------------------------------------------- Anzeige
@@ -375,10 +386,11 @@ public final class ConfigScreen extends Screen {
 
 		switch (current) {
 			case ALLGEMEIN -> {
-				text(g, "Board-Größe: " + cfg.size + " x " + cfg.size, x0, 50, WHITE);
-				text(g, "Dein Name:", x0, 128, WHITE);
-				text(g, "Goals: " + cfg.goals.size() + " (benötigt: " + Bingo.needed() + ")", x0, 204, GRAY);
-				text(g, "Änderungen an Größe und Lockout gelten ab der nächsten Runde.", x0, 216, GRAY);
+				text(g, Lang.t("gen.size", cfg.size, cfg.size), x0, 50, WHITE);
+				text(g, Lang.t("gen.name"), x0, 128, WHITE);
+				text(g, Lang.t("gen.goals", cfg.goals.size(), Bingo.needed()), x0, 180, GRAY);
+				text(g, Lang.t("gen.nextround"), x0, 192, GRAY);
+				text(g, Lang.t("gen.invhint"), x0, 204, GRAY);
 			}
 			case GOALS -> {
 				int start = goalPage * PER_PAGE;
@@ -387,9 +399,9 @@ public final class ConfigScreen extends Screen {
 					if (idx >= cfg.goals.size()) break;
 					text(g, cut((idx + 1) + ". " + cfg.goals.get(idx), W - 32), x0 + 2, 70 + r * ROW + 6, WHITE);
 				}
-				if (cfg.goals.isEmpty()) text(g, "Noch keine Goals. Oben eintippen (mehrere mit ; trennen).", x0 + 2, 76, GRAY);
+				if (cfg.goals.isEmpty()) text(g, cut(Lang.t("goals.empty"), W), x0 + 2, 76, GRAY);
 				int pages = Math.max(1, (cfg.goals.size() + PER_PAGE - 1) / PER_PAGE);
-				String p = "Seite " + (goalPage + 1) + " / " + pages + "   Goals: " + cfg.goals.size() + " / " + Bingo.needed();
+				String p = Lang.t("goals.page", goalPage + 1, pages, cfg.goals.size(), Bingo.needed());
 				text(g, p, (this.width - this.font.width(p)) / 2, 70 + PER_PAGE * ROW + 9, GRAY);
 			}
 			case LISTEN -> {
@@ -400,49 +412,54 @@ public final class ConfigScreen extends Screen {
 					String n = listNames.get(idx);
 					List<String> l = cfg.lists.get(n);
 					String label = n + " (" + (l == null ? 0 : l.size()) + ")";
-					text(g, cut(label, W - 136), x0 + 2, 70 + r * ROW + 6, WHITE);
+					text(g, cut(label, W - 144), x0 + 2, 70 + r * ROW + 6, WHITE);
 				}
-				if (listNames.isEmpty()) text(g, "Noch keine Listen. Name eingeben und Speichern klicken.", x0 + 2, 76, GRAY);
+				if (listNames.isEmpty()) text(g, cut(Lang.t("lists.none"), W), x0 + 2, 76, GRAY);
 				int pages = Math.max(1, (listNames.size() + PER_PAGE - 1) / PER_PAGE);
-				String p = "Seite " + (listPage + 1) + " / " + pages;
+				String p = Lang.t("lists.page", listPage + 1, pages);
 				text(g, p, (this.width - this.font.width(p)) / 2, 70 + PER_PAGE * ROW + 9, GRAY);
-				text(g, "Speichert die aktuellen Goals unter dem Namen.", x0, 70 + PER_PAGE * ROW + 30, GRAY);
+				text(g, cut(Lang.t("lists.info"), W), x0, 70 + PER_PAGE * ROW + 30, GRAY);
 			}
 			case DESIGN -> {
 				Palette pal = Palette.of(cfg);
 				int i = 0;
-				for (Map.Entry<String, String> e : COLOR_LABELS.entrySet()) {
+				for (String key : Palette.KEYS) {
 					int cx = x0 + (i / 4) * 165;
 					int y = 78 + (i % 4) * 26;
-					text(g, e.getValue(), cx, y + 6, WHITE);
-					int col = 0xFF000000 | (pal.colorOf(e.getKey()) & 0xFFFFFF);
+					text(g, colorLabel(key), cx, y + 6, WHITE);
+					int col = 0xFF000000 | (pal.colorOf(key) & 0xFFFFFF);
 					g.fill(cx + 134, y + 3, cx + 148, y + 17, col);
 					g.outline(cx + 134, y + 3, 14, 14, 0xFFFFFFFF);
 					i++;
 				}
-				text(g, "Eigene Farben als Hex-Wert (z. B. FF8800) eintippen.", x0, 168, GRAY);
+				text(g, cut(Lang.t("design.hex"), W), x0, 168, GRAY);
 			}
 			case SPIEL -> {
-				text(g, "Code:", x0, 76, WHITE);
+				text(g, Lang.t("game.code"), x0, 76, WHITE);
 				int y = 152;
-				text(g, "Modus: " + switch (Bingo.role) {
-					case NONE -> "kein Spiel";
-					case SOLO -> "Solo";
-					case HOST -> "Host";
-					case GUEST -> "Mitspieler";
-				}, x0, y, WHITE);
-				if (!Bingo.code.isEmpty()) text(g, "Party-Code: " + Bingo.code, x0, y + 12, WHITE);
+				String mode = Lang.t(switch (Bingo.role) {
+					case NONE -> "mode.none";
+					case SOLO -> "mode.solo";
+					case HOST -> "mode.host";
+					case GUEST -> "mode.guest";
+				});
+				text(g, Lang.t("game.mode", mode), x0, y, WHITE);
+				if (!Bingo.code.isEmpty()) text(g, Lang.t("hud.code", Bingo.code), x0, y + 12, WHITE);
 				if (Bingo.role == Bingo.Role.HOST) {
-					text(g, Bingo.connected ? Bingo.names[1] + " ist verbunden" : "Warte auf Mitspieler ...", x0, y + 24, GRAY);
+					text(g, Bingo.connected ? Lang.t("hud.peer_connected", Bingo.names[1]) : Lang.t("hud.waiting_peer"),
+						x0, y + 24, GRAY);
 				} else if (Bingo.role == Bingo.Role.GUEST) {
-					text(g, Bingo.connected ? "Verbunden mit " + Bingo.names[0] : "Verbinde ...", x0, y + 24, GRAY);
+					text(g, Bingo.connected ? Lang.t("hud.connected_to", Bingo.names[0]) : Lang.t("hud.connecting"),
+						x0, y + 24, GRAY);
 				}
-				text(g, Bingo.game == null ? "Keine Runde aktiv" : "Runde läuft: " + Bingo.game.size + "x" + Bingo.game.size, x0, y + 36, GRAY);
+				text(g, Bingo.game == null ? Lang.t("game.norunning") : Lang.t("game.running", Bingo.game.size, Bingo.game.size),
+					x0, y + 36, GRAY);
 			}
 		}
 
 		if (!status.isEmpty()) {
-			text(g, cut(status, W), (this.width - this.font.width(cut(status, W))) / 2, this.height - 40, 0xFFFFD27F);
+			String s = cut(status, W + 60);
+			text(g, s, (this.width - this.font.width(s)) / 2, this.height - 40, 0xFFFFD27F);
 		}
 	}
 

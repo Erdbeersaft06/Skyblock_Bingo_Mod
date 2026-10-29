@@ -4,6 +4,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +27,10 @@ public final class BingoHud {
 
 	public static void extract(GuiGraphicsExtractor g, DeltaTracker tickCounter) {
 		Config cfg = Bingo.cfg;
-		if (!cfg.hudVisible || Bingo.role == Bingo.Role.NONE) return;
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
+		Bingo.pollMouse(mc);
+		if (!cfg.hudVisible || Bingo.role == Bingo.Role.NONE) return;
 		// Waehrend das Verschieben-Fenster offen ist, zeichnet es das Board selbst
 		if (mc.gui.screen() instanceof MoverScreen || mc.gui.screen() instanceof BoardScreen) return;
 		Font font = mc.font;
@@ -40,6 +42,17 @@ public final class BingoHud {
 			return;
 		}
 		drawBoard(g, mc, font, pal, game, cfg);
+
+		// Im Inventar: Feld unter der Maus hervorheben
+		if (cfg.inventoryClick && !game.over && mc.gui.screen() instanceof InventoryScreen) {
+			double[] m = Bingo.mouseGui(mc);
+			int i = cellAt(mc, font, game, cfg, m[0], m[1]);
+			if (i >= 0) {
+				int[] r = cellRect(mc, font, game, cfg, i);
+				g.outline(r[0], r[1], r[2], r[2], GOLD);
+				g.outline(r[0] + 1, r[1] + 1, r[2] - 2, r[2] - 2, GOLD);
+			}
+		}
 	}
 
 	/** Liefert {Feldgroesse, Breite, Hoehe} des Boards in GUI-Pixeln. */
@@ -52,6 +65,20 @@ public final class BingoHud {
 		int cell = Math.max(20, cfg.cell);
 		int bw = n * cell + (n - 1) * gap;
 		return new int[] {cell, bw + pad * 2, pad + headerH + bw + pad + bannerH};
+	}
+
+	/** Rechteck eines Feldes: {x, y, Seitenlaenge}. */
+	static int[] cellRect(Minecraft mc, Font font, Game game, Config cfg, int i) {
+		int n = game.size;
+		int gap = 2;
+		int pad = 4;
+		int lh = font.lineHeight + 1;
+		int headerH = lh * 2 + 3;
+		int[] ms = measure(font, n, game.over, cfg);
+		int[] pos = position(mc, ms[1], ms[2], cfg);
+		int cx = pos[0] + pad + (i % n) * (ms[0] + gap);
+		int cy = pos[1] + pad + headerH + (i / n) * (ms[0] + gap);
+		return new int[] {cx, cy, ms[0]};
 	}
 
 	/** Index des Feldes unter dem Mauszeiger oder -1. */
@@ -86,18 +113,18 @@ public final class BingoHud {
 		List<String> lines = new ArrayList<>();
 		switch (Bingo.role) {
 			case HOST -> {
-				lines.add("Party-Code: " + Bingo.code);
-				lines.add(Bingo.connected ? Bingo.names[1] + " ist verbunden" : "Warte auf Mitspieler ...");
-				lines.add(Bingo.connected ? "Starten mit /sbb start" : "Mitspieler: /sbb join " + Bingo.code);
+				lines.add(Lang.t("hud.code", Bingo.code));
+				lines.add(Bingo.connected ? Lang.t("hud.peer_connected", Bingo.names[1]) : Lang.t("hud.waiting_peer"));
+				lines.add(Bingo.connected ? Lang.t("hud.start_hint") : Lang.t("hud.join_hint", Bingo.code));
 			}
 			case GUEST -> {
-				lines.add("Party-Code: " + Bingo.code);
-				lines.add(Bingo.connected ? "Verbunden mit " + Bingo.names[0] : "Verbinde ...");
-				if (Bingo.connected) lines.add("Warte auf den Start");
+				lines.add(Lang.t("hud.code", Bingo.code));
+				lines.add(Bingo.connected ? Lang.t("hud.connected_to", Bingo.names[0]) : Lang.t("hud.connecting"));
+				if (Bingo.connected) lines.add(Lang.t("hud.wait_start"));
 			}
 			case SOLO -> {
-				lines.add("Solo-Modus");
-				lines.add("Starten mit /sbb start");
+				lines.add(Lang.t("hud.solo"));
+				lines.add(Lang.t("hud.start_hint"));
 			}
 			default -> {
 				return;
@@ -138,7 +165,7 @@ public final class BingoHud {
 		g.outline(x, y, pw, ph, pal.border());
 
 		// Kopfzeile: Zeit, Modus
-		String top = "Zeit " + formatTime(game.elapsed()) + "   " + n + "x" + n + (game.lockout ? " Lockout" : "");
+		String top = Lang.t("hud.time", formatTime(game.elapsed()), n, n, game.lockout ? " Lockout" : "");
 		g.text(font, top, x + pad + 1, y + pad, pal.text(), false);
 
 		// Spieler und Punktestand
@@ -199,8 +226,8 @@ public final class BingoHud {
 			int by = gy + bw + 3;
 			g.fill(x + pad, by, x + pw - pad, by + lh + 3, GOLD);
 			String msg = game.np == 1
-				? "Bingo! Zeit " + formatTime(game.finalMs)
-				: Bingo.names[Math.max(0, game.winner)] + " hat gewonnen! " + formatTime(game.finalMs);
+				? Lang.t("hud.bingo", formatTime(game.finalMs))
+				: Lang.t("hud.wins", Bingo.names[Math.max(0, game.winner)], formatTime(game.finalMs));
 			g.text(font, msg, x + pad + 4, by + 2, DARK_TEXT, false);
 		}
 	}

@@ -22,6 +22,25 @@ Schlägt der Bau fehl, die rot markierte Fehlermeldung aus dem Actions-Log kopie
 Java 25 und Gradle 9.5.1 installieren, im Projektordner `gradle build` ausführen.
 Die Datei liegt danach in `build/libs/`.
 
+## Sprachen
+
+Deutsch, Englisch, Französisch und Spanisch. Umschalten im Menü (Reiter Allgemein, Knopf „Sprache“)
+oder mit `/sbb lang <de|en|fr|es>`. Die Beispiel-Goals werden in der gewählten Sprache geladen.
+
+## Abhaken im Inventar
+
+Mit geöffnetem Inventar (Taste E) ist der Mauszeiger frei: ein Linksklick direkt auf ein Feld des HUD-Boards
+hakt es ab (das Feld unter der Maus wird golden umrandet). Abschaltbar im Menü unter Allgemein.
+Tipp: Platziere das Board mit `/sbb gui` so, dass es keine Inventar-Slots verdeckt.
+
+## Menü (empfohlen)
+
+`/sbb` ohne Zusatz öffnet das Einstellungsmenü mit den Reitern **Allgemein** (Board-Größe, Lockout, HUD, Name),
+**Goals** (hinzufügen, löschen, Beispiele), **Listen** (Goal-Listen speichern und laden), **Design** (Dunkel, Hell,
+eigene Farben) und **Spiel** (alleine spielen, Party erstellen, beitreten, Runde starten).
+`/sbb board` öffnet das Board: ein Mausklick auf ein Feld hakt es ab.
+`/sbb gui` öffnet das Fenster zum Verschieben (ziehen) und Skalieren (Mausrad) des Boards.
+
 ## Befehle (alle unter /sbb, weil /bingo schon Hypixel gehört)
 
 | Befehl | Wirkung |
@@ -39,7 +58,8 @@ Die Datei liegt danach in `build/libs/`.
 | `/sbb end` / `leave` | Runde beenden / Party verlassen |
 | `/sbb theme dark/light/custom` | Design |
 | `/sbb color <bg/cell/text/muted/p0/p1/border> <RRGGBB>` | eigene Farben (schaltet auf custom) |
-| `/sbb hud show/hide`, `hud pos <x> <y>`, `hud cell <px>` | HUD anzeigen, verschieben, Feldgröße |
+| `/sbb gui` | Fenster zum Verschieben (Maus ziehen) und Skalieren (Mausrad) des Boards, mit Buttons für Design und Zurücksetzen |
+| `/sbb hud show/hide`, `hud pos <x> <y>`, `hud cell <px>` | HUD anzeigen, verschieben, Feldgröße per Befehl |
 | `/sbb name <name>` | Anzeigename |
 
 Goals und Einstellungen werden automatisch gespeichert in `config/skyblockbingo.json`.

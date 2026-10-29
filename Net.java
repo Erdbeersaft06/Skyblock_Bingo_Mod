@@ -63,14 +63,14 @@ public final class Net {
 				HttpResponse<Void> resp = http.send(req, HttpResponse.BodyHandlers.discarding());
 				if (!running) return;
 				if (resp.statusCode() == 429) {
-					onError.accept("Zu viele Nachrichten, bitte kurz warten.");
+					onError.accept(Lang.t("net.rate"));
 				} else if (resp.statusCode() >= 400) {
-					onError.accept("Senden fehlgeschlagen (HTTP " + resp.statusCode() + ").");
+					onError.accept(Lang.t("net.sendhttp", resp.statusCode()));
 				}
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			} catch (Exception e) {
-				if (running) onError.accept("Senden fehlgeschlagen: " + e.getClass().getSimpleName());
+				if (running) onError.accept(Lang.t("net.sendfail", e.getClass().getSimpleName()));
 			}
 		});
 	}
@@ -98,7 +98,7 @@ public final class Net {
 				if (!running) return;
 				if (!reportedError) {
 					reportedError = true;
-					onError.accept("Verbindung unterbrochen, versuche erneut ...");
+					onError.accept(Lang.t("net.reconnect"));
 				}
 			}
 			if (running) {

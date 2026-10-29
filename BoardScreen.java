@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 /** Zeigt das echte Board; ein Mausklick auf ein Feld hakt es ab (oder nimmt die Markierung zurueck). */
 public final class BoardScreen extends Screen {
 	public BoardScreen() {
-		super(Component.literal("Skyblock Bingo - Board"));
+		super(Component.literal(Lang.t("board.title")));
 	}
 
 	@Override
@@ -18,14 +18,14 @@ public final class BoardScreen extends Screen {
 		Game game = Bingo.game;
 		String hint;
 		if (game == null) {
-			hint = "Keine Runde aktiv. Im Menü (/sbb) unter \"Spiel\" eine Runde starten.";
+			hint = Lang.t("board.none");
 		} else {
 			BingoHud.drawBoard(graphics, this.minecraft, this.font, Palette.of(Bingo.cfg), game, Bingo.cfg);
 			int hover = BingoHud.cellAt(this.minecraft, this.font, game, Bingo.cfg, mouseX, mouseY);
 			if (hover >= 0 && !game.over) {
-				hint = "Klick: Feld " + (hover + 1) + " abhaken / zurücknehmen";
+				hint = Lang.t("board.hover", hover + 1);
 			} else {
-				hint = game.over ? "Runde vorbei. Neue Runde im Menü unter \"Spiel\"." : "Klick auf ein Feld hakt es ab.";
+				hint = Lang.t(game.over ? "board.over" : "board.click");
 			}
 		}
 		graphics.text(this.font, hint, (this.width - this.font.width(hint)) / 2, this.height - 20, 0xFFFFFFFF, true);

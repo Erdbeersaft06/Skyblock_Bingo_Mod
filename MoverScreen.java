@@ -20,7 +20,7 @@ public final class MoverScreen extends Screen {
 	private Button themeButton;
 
 	public MoverScreen() {
-		super(Component.literal("Skyblock Bingo - HUD verschieben"));
+		super(Component.literal(Lang.t("mover.title")));
 		this.preview = makePreview();
 	}
 
@@ -59,21 +59,21 @@ public final class MoverScreen extends Screen {
 		}).bounds(sx, y, w, h).build();
 		this.addRenderableWidget(themeButton);
 
-		this.addRenderableWidget(Button.builder(Component.literal("Zurücksetzen"), b -> {
+		this.addRenderableWidget(Button.builder(Component.literal(Lang.t("mover.reset")), b -> {
 			Bingo.cfg.hudX = 6;
 			Bingo.cfg.hudY = 6;
 			Bingo.cfg.cell = 56;
 			Bingo.cfg.save();
 		}).bounds(sx + w + gap, y, w, h).build());
 
-		this.addRenderableWidget(Button.builder(Component.literal("Fertig"), b -> this.onClose())
+		this.addRenderableWidget(Button.builder(Component.literal(Lang.t("mover.done")), b -> this.onClose())
 			.bounds(sx + (w + gap) * 2, y, w, h).build());
 	}
 
 	private static Component themeLabel() {
 		String t = Bingo.cfg.theme;
-		String name = t.equals("light") ? "Hell" : t.equals("custom") ? "Eigene" : "Dunkel";
-		return Component.literal("Design: " + name);
+		String name = Lang.t(t.equals("light") ? "theme.light" : t.equals("custom") ? "theme.custom" : "theme.dark");
+		return Component.literal(Lang.t("mover.theme", name));
 	}
 
 	private static void cycleTheme() {
@@ -114,9 +114,9 @@ public final class MoverScreen extends Screen {
 			graphics.outline(p[0] - 1, p[1] - 1, m[1] + 2, m[2] + 2, GOLD);
 		}
 
-		String l1 = "Ziehen: Board verschieben     Mausrad: Größe ändern";
+		String l1 = Lang.t("mover.hint1");
 		graphics.text(this.font, l1, (this.width - this.font.width(l1)) / 2, this.height - 52, WHITE, true);
-		String l2 = "Position " + p[0] + ", " + p[1] + "     Feldgröße " + cfg.cell;
+		String l2 = Lang.t("mover.hint2", p[0], p[1], cfg.cell);
 		graphics.text(this.font, l2, (this.width - this.font.width(l2)) / 2, this.height - 40, 0xFFCCCCCC, true);
 	}
 

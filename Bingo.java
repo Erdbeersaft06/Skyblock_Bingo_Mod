@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 
 import java.security.SecureRandom;
@@ -25,7 +26,7 @@ public final class Bingo {
 	public static int myIdx = 0;
 	public static String code = "";
 	public static Game game = null;
-	public static final String[] names = {"Spieler 1", "Spieler 2"};
+	public static final String[] names = {"Player 1", "Player 2"};
 	/** Host: Mitspieler verbunden. Gast: Host hat geantwortet. */
 	public static boolean connected = false;
 
@@ -72,7 +73,7 @@ public final class Bingo {
 	}
 
 	private static String myName() {
-		return cfg.name.isBlank() ? (role == Role.GUEST ? "Spieler 2" : "Spieler 1") : cfg.name;
+		return cfg.name.isBlank() ? Lang.t(role == Role.GUEST ? "player2" : "player1") : cfg.name;
 	}
 
 	public static int needed() {
@@ -86,7 +87,7 @@ public final class Bingo {
 		role = Role.HOST;
 		myIdx = 0;
 		names[0] = myName();
-		names[1] = "Spieler 2";
+		names[1] = Lang.t("player2");
 		code = randomString(6, CODE_CHARS);
 		connected = false;
 		guestId = null;
@@ -134,8 +135,35 @@ public final class Bingo {
 	/** Wird jeden Client-Tick aufgerufen. */
 	public static void tick() {
 		if (role == Role.GUEST && !connected && joinDeadline > 0 && System.currentTimeMillis() > joinDeadline) {
-			chat("Kein Host mit diesem Code gefunden. Code pruefen und erneut versuchen.");
+			chat(Lang.t("msg.nohost"));
 			leave();
+		}
+	}
+
+	private static boolean wasDown = false;
+
+	/** Mausposition in GUI-Koordinaten. */
+	public static double[] mouseGui(Minecraft mc) {
+		var w = mc.getWindow();
+		double sw = Math.max(1, w.getScreenWidth());
+		double sh = Math.max(1, w.getScreenHeight());
+		return new double[] {
+			mc.mouseHandler.xpos() * w.getGuiScaledWidth() / sw,
+			mc.mouseHandler.ypos() * w.getGuiScaledHeight() / sh};
+	}
+
+	/** Jedes Bild aufrufen: Ein Linksklick auf das HUD-Board waehrend das Inventar offen ist hakt das Feld ab. */
+	public static void pollMouse(Minecraft mc) {
+		boolean down = mc.mouseHandler.isLeftPressed();
+		boolean click = down && !wasDown;
+		wasDown = down;
+		if (!click || !cfg.inventoryClick || !cfg.hudVisible || game == null || game.over) return;
+		if (!(mc.gui.screen() instanceof InventoryScreen)) return;
+		double[] m = mouseGui(mc);
+		int i = BingoHud.cellAt(mc, mc.font, game, cfg, m[0], m[1]);
+		if (i >= 0) {
+			String err = mark(i);
+			if (err != null) chat(err);
 		}
 	}
 
@@ -143,12 +171,12 @@ public final class Bingo {
 
 	/** Neue Runde starten (Host oder Solo). Gibt eine Fehlermeldung zurueck oder null. */
 	public static String startGame() {
-		if (role == Role.NONE) return "Erst mit /sbb solo oder /sbb host ein Spiel eroeffnen.";
-		if (role == Role.GUEST) return "Nur der Host kann das Spiel starten.";
+		if (role == Role.NONE) return Lang.t("err.nosession");
+		if (role == Role.GUEST) return Lang.t("err.hostonly");
 		if (cfg.goals.size() < needed()) {
-			return "Du brauchst mindestens " + needed() + " Goals (aktuell " + cfg.goals.size() + ").";
+			return Lang.t("err.needgoals", needed(), cfg.goals.size());
 		}
-		if (role == Role.HOST && !connected) return "Noch kein Mitspieler verbunden.";
+		if (role == Role.HOST && !connected) return Lang.t("err.nopeer");
 		List<String> pool = new ArrayList<>(cfg.goals);
 		Collections.shuffle(pool, RNG);
 		String[] board = pool.subList(0, needed()).toArray(new String[0]);
@@ -165,9 +193,9 @@ public final class Bingo {
 
 	/** Feld (0-basiert) fuer den lokalen Spieler umschalten. */
 	public static String mark(int i) {
-		if (game == null) return "Es laeuft gerade kein Spiel.";
-		if (game.over) return "Die Runde ist schon vorbei.";
-		if (i < 0 || i >= game.board.length) return "Feldnummer muss zwischen 1 und " + game.board.length + " liegen.";
+		if (game == null) return Lang.t("err.nogame");
+		if (game.over) return Lang.t("err.over");
+		if (i < 0 || i >= game.board.length) return Lang.t("err.cellrange", game.board.length);
 		if (role == Role.GUEST) {
 			JsonObject o = msg("click");
 			o.addProperty("i", i);
@@ -202,11 +230,11 @@ public final class Bingo {
 	private static void announceWin(Game g) {
 		String time = BingoHud.formatTime(g.finalMs);
 		if (g.np == 1) {
-			chat("Bingo! Reihe geschafft in " + time + ".");
+			chat(Lang.t("msg.win_solo", time));
 		} else if (g.winner == myIdx) {
-			chat("Du hast gewonnen! Zeit: " + time);
+			chat(Lang.t("msg.win_you", time));
 		} else {
-			chat(names[g.winner] + " hat gewonnen! Zeit: " + time);
+			chat(Lang.t("msg.win_other", names[g.winner], time));
 		}
 	}
 
@@ -280,7 +308,7 @@ public final class Bingo {
 			boolean first = guestId == null;
 			guestId = from;
 			String n = str(o, "name");
-			if (n.isBlank()) n = "Spieler 2";
+			if (n.isBlank()) n = Lang.t("player2");
 			if (n.equals(names[0])) n = n + " (2)";
 			names[1] = n.length() > 20 ? n.substring(0, 20) : n;
 			connected = true;
@@ -289,7 +317,7 @@ public final class Bingo {
 			w.addProperty("host", names[0]);
 			w.addProperty("guest", names[1]);
 			net.send(w);
-			if (first) chat(names[1] + " ist beigetreten.");
+			if (first) chat(Lang.t("msg.joined", names[1]));
 			if (game != null) sendStart();
 		} else if (t.equals("click") && from.equals(guestId) && game != null && o.has("i")) {
 			click(o.get("i").getAsInt(), 1);
@@ -303,12 +331,12 @@ public final class Bingo {
 				if (!forMe) return;
 				names[0] = str(o, "host");
 				names[1] = str(o, "guest");
-				if (!connected) chat("Verbunden mit " + names[0] + ". Warte, bis der Host startet.");
+				if (!connected) chat(Lang.t("msg.connected", names[0]));
 				connected = true;
 			}
 			case "full" -> {
 				if (!forMe) return;
-				chat("Das Spiel ist schon voll.");
+				chat(Lang.t("msg.full"));
 				leave();
 			}
 			case "start" -> {
@@ -325,7 +353,7 @@ public final class Bingo {
 				names[1] = n.get(1).getAsString();
 				boolean isNew = game == null || game.round != g.round;
 				game = g;
-				if (isNew) chat("Neue Runde gestartet: " + size + "x" + size + (g.lockout ? ", Lockout" : "") + ".");
+				if (isNew) chat(Lang.t("msg.newround", size, size, g.lockout ? ", Lockout" : ""));
 			}
 			case "st" -> {
 				Game g = game;
@@ -342,7 +370,7 @@ public final class Bingo {
 				if (g.over && !wasOver) announceWin(g);
 			}
 			case "lobby" -> {
-				if (game != null) chat("Der Host hat die Runde beendet.");
+				if (game != null) chat(Lang.t("msg.hostended"));
 				game = null;
 			}
 			default -> { }

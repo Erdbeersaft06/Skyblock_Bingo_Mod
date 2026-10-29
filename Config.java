@@ -31,6 +31,10 @@ public final class Config {
 	public int hudY = 6;
 	/** Gewuenschte Feldgroesse in GUI-Pixeln */
 	public int cell = 56;
+	/** Sprache: de, en, fr, es */
+	public String lang = "de";
+	/** Im Inventar (E) direkt auf das Board klicken */
+	public boolean inventoryClick = true;
 
 	private static Path path() {
 		return FabricLoader.getInstance().getConfigDir().resolve("skyblockbingo.json");
@@ -58,6 +62,7 @@ public final class Config {
 		if (custom == null) custom = new LinkedHashMap<>();
 		if (name == null) name = "";
 		if (theme == null) theme = "dark";
+		if (lang == null || !Lang.CODES.contains(lang)) lang = "de";
 		size = Math.max(3, Math.min(7, size));
 		cell = Math.max(24, Math.min(100, cell));
 	}

@@ -14,20 +14,12 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /** Alle Befehle unter /sbb (bewusst nicht /bingo, das gehoert Hypixel). */
 public final class BingoCommands {
-	static final List<String> EXAMPLES = List.of(
-		"Besiege 25 Zombies", "Besiege 15 Spinnen", "Besiege 10 Endermen", "Besiege einen Boss", "Besiege 20 Skelette",
-		"Fische 20 Items", "Fische 5 Seemonster", "Baue 64 Kohle ab", "Baue 32 Eisenerz ab", "Baue 16 Diamanten ab",
-		"Ernte 100 Weizen", "Ernte 64 Karotten", "Ernte 50 Kuerbisse", "Baue 64 Holz ab", "Faelle 50 Baeume",
-		"Verkaufe 10 Items im Bazaar", "Kaufe ein Item im Bazaar", "Craft ein neues Werkzeug", "Verzaubere ein Item",
-		"Schmiede ein Item", "Besuche die Insel eines Spielers", "Platziere 5 Minions", "Sammle 100 Minion-Items",
-		"Erledige 3 Quests", "Loese einen Raetsel-Raum", "Toete 5 Mobs ohne Schaden", "Sammle 10 verschiedene Items",
-		"Lege 500 Bloecke zu Fuss zurueck", "Rette 3 Tiere", "Oeffne 2 Truhen");
-
 	private BingoCommands() {}
 
 	public static void init() {
@@ -62,8 +54,17 @@ public final class BingoCommands {
 		return b.buildFuture();
 	}
 
+	private static CompletableFuture<Suggestions> langCodes(CommandContext<FabricClientCommandSource> c, SuggestionsBuilder b) {
+		for (String k : Lang.CODES) b.suggest(k);
+		return b.buildFuture();
+	}
+
 	private static void saveCfg() {
 		Bingo.cfg.save();
+	}
+
+	private static String onOff(boolean b) {
+		return Lang.t(b ? "onoff.on" : "onoff.off");
 	}
 
 	// ---------------------------------------------------------------- Befehle
@@ -71,9 +72,12 @@ public final class BingoCommands {
 	private static void register(CommandDispatcher<FabricClientCommandSource> d) {
 		LiteralArgumentBuilder<FabricClientCommandSource> root = lit("sbb");
 
-		root.executes(c -> openMenu(c));
-		root.then(lit("menu").executes(c -> openMenu(c)));
-		root.then(lit("board").executes(c -> openBoard(c)));
+		root.executes(c -> openMenu());
+		root.then(lit("menu").executes(c -> openMenu()));
+		root.then(lit("board").executes(c -> {
+			Bingo.open(BoardScreen::new);
+			return 1;
+		}));
 		root.then(lit("help").executes(c -> help(c)));
 
 		// --- Goals
@@ -91,39 +95,39 @@ public final class BingoCommands {
 					}
 				}
 				saveCfg();
-				say(c, added + " Goal(s) hinzugefuegt. Gesamt: " + Bingo.cfg.goals.size() + " / " + Bingo.needed() + " benoetigt.");
+				say(c, Lang.t("cmd.goals_added", added, Bingo.cfg.goals.size(), Bingo.needed()));
 				return 1;
 			})))
 			.then(lit("remove").then(arg("nr", IntegerArgumentType.integer(1)).executes(c -> {
 				int nr = IntegerArgumentType.getInteger(c, "nr");
 				if (nr > Bingo.cfg.goals.size()) {
-					say(c, "Es gibt nur " + Bingo.cfg.goals.size() + " Goals.");
+					say(c, Lang.t("cmd.only_goals", Bingo.cfg.goals.size()));
 					return 0;
 				}
 				String removed = Bingo.cfg.goals.remove(nr - 1);
 				saveCfg();
-				say(c, "Entfernt: " + removed);
+				say(c, Lang.t("cmd.removed", removed));
 				return 1;
 			})))
 			.then(lit("list")
 				.executes(c -> listGoals(c, 1))
-				.then(arg("seite", IntegerArgumentType.integer(1)).executes(c -> listGoals(c, IntegerArgumentType.getInteger(c, "seite")))))
+				.then(arg("page", IntegerArgumentType.integer(1)).executes(c -> listGoals(c, IntegerArgumentType.getInteger(c, "page")))))
 			.then(lit("clear").executes(c -> {
 				Bingo.cfg.goals.clear();
 				saveCfg();
-				say(c, "Alle Goals geloescht.");
+				say(c, Lang.t("cmd.goals_cleared"));
 				return 1;
 			}))
 			.then(lit("example").executes(c -> {
 				int added = 0;
-				for (String g : EXAMPLES) {
+				for (String g : Lang.examples()) {
 					if (!Bingo.cfg.goals.contains(g)) {
 						Bingo.cfg.goals.add(g);
 						added++;
 					}
 				}
 				saveCfg();
-				say(c, added + " Beispiel-Goals hinzugefuegt. Gesamt: " + Bingo.cfg.goals.size());
+				say(c, Lang.t("cmd.examples_added", added, Bingo.cfg.goals.size()));
 				return 1;
 			})));
 
@@ -132,42 +136,42 @@ public final class BingoCommands {
 			.then(lit("save").then(arg("name", StringArgumentType.word()).executes(c -> {
 				String n = StringArgumentType.getString(c, "name");
 				if (Bingo.cfg.goals.isEmpty()) {
-					say(c, "Es gibt noch keine Goals zum Speichern.");
+					say(c, Lang.t("lists.nogoals"));
 					return 0;
 				}
-				Bingo.cfg.lists.put(n, new java.util.ArrayList<>(Bingo.cfg.goals));
+				Bingo.cfg.lists.put(n, new ArrayList<>(Bingo.cfg.goals));
 				saveCfg();
-				say(c, "Liste '" + n + "' gespeichert (" + Bingo.cfg.goals.size() + " Goals).");
+				say(c, Lang.t("lists.saved", n, Bingo.cfg.goals.size()));
 				return 1;
 			})))
 			.then(lit("load").then(arg("name", StringArgumentType.word()).suggests(BingoCommands::listNames).executes(c -> {
 				String n = StringArgumentType.getString(c, "name");
 				List<String> l = Bingo.cfg.lists.get(n);
 				if (l == null) {
-					say(c, "Liste '" + n + "' gibt es nicht. Mit /sbb list show siehst du alle Listen.");
+					say(c, Lang.t("cmd.list_missing", n));
 					return 0;
 				}
-				Bingo.cfg.goals = new java.util.ArrayList<>(l);
+				Bingo.cfg.goals = new ArrayList<>(l);
 				saveCfg();
-				say(c, "Liste '" + n + "' geladen (" + l.size() + " Goals).");
+				say(c, Lang.t("lists.loaded", n, l.size()));
 				return 1;
 			})))
 			.then(lit("delete").then(arg("name", StringArgumentType.word()).suggests(BingoCommands::listNames).executes(c -> {
 				String n = StringArgumentType.getString(c, "name");
 				if (Bingo.cfg.lists.remove(n) == null) {
-					say(c, "Liste '" + n + "' gibt es nicht.");
+					say(c, Lang.t("cmd.list_missing2", n));
 					return 0;
 				}
 				saveCfg();
-				say(c, "Liste '" + n + "' geloescht.");
+				say(c, Lang.t("lists.deleted", n));
 				return 1;
 			})))
 			.then(lit("show").executes(c -> {
 				if (Bingo.cfg.lists.isEmpty()) {
-					say(c, "Noch keine Listen gespeichert. Speichern mit /sbb list save <name>");
+					say(c, Lang.t("cmd.lists_none"));
 				} else {
-					say(c, "Gespeicherte Listen:");
-					Bingo.cfg.lists.forEach((k, v) -> plain(c, " - " + k + " (" + v.size() + " Goals)"));
+					say(c, Lang.t("cmd.lists_header"));
+					Bingo.cfg.lists.forEach((k, v) -> plain(c, Lang.t("cmd.lists_entry", k, v.size())));
 				}
 				return 1;
 			})));
@@ -176,13 +180,13 @@ public final class BingoCommands {
 		root.then(lit("size").then(arg("n", IntegerArgumentType.integer(3, 7)).executes(c -> {
 			Bingo.cfg.size = IntegerArgumentType.getInteger(c, "n");
 			saveCfg();
-			say(c, "Board-Groesse: " + Bingo.cfg.size + "x" + Bingo.cfg.size + " (" + Bingo.needed() + " Goals benoetigt). Gilt ab der naechsten Runde.");
+			say(c, Lang.t("cmd.size", Bingo.cfg.size, Bingo.cfg.size, Bingo.needed()));
 			return 1;
 		})));
-		root.then(lit("lockout").then(arg("an", BoolArgumentType.bool()).executes(c -> {
-			Bingo.cfg.lockout = BoolArgumentType.getBool(c, "an");
+		root.then(lit("lockout").then(arg("on", BoolArgumentType.bool()).executes(c -> {
+			Bingo.cfg.lockout = BoolArgumentType.getBool(c, "on");
 			saveCfg();
-			say(c, "Lockout: " + (Bingo.cfg.lockout ? "an" : "aus") + ". Gilt ab der naechsten Runde.");
+			say(c, Lang.t("cmd.lockout", onOff(Bingo.cfg.lockout)));
 			return 1;
 		})));
 		root.then(lit("name").then(arg("name", StringArgumentType.greedyString()).executes(c -> {
@@ -190,7 +194,18 @@ public final class BingoCommands {
 			if (n.length() > 20) n = n.substring(0, 20);
 			Bingo.cfg.name = n;
 			saveCfg();
-			say(c, "Dein Name: " + n);
+			say(c, Lang.t("cmd.name", n));
+			return 1;
+		})));
+		root.then(lit("lang").then(arg("code", StringArgumentType.word()).suggests(BingoCommands::langCodes).executes(c -> {
+			String code = StringArgumentType.getString(c, "code").toLowerCase();
+			if (!Lang.CODES.contains(code)) {
+				say(c, Lang.t("cmd.lang_unknown"));
+				return 0;
+			}
+			Bingo.cfg.lang = code;
+			saveCfg();
+			say(c, Lang.t("cmd.lang_set", Lang.languageName()));
 			return 1;
 		})));
 
@@ -200,43 +215,43 @@ public final class BingoCommands {
 			.then(lit("light").executes(c -> setTheme(c, "light")))
 			.then(lit("custom").executes(c -> setTheme(c, "custom"))));
 		root.then(lit("color")
-			.then(arg("teil", StringArgumentType.word()).suggests(BingoCommands::colorKeys)
+			.then(arg("part", StringArgumentType.word()).suggests(BingoCommands::colorKeys)
 				.then(arg("hex", StringArgumentType.word()).executes(c -> {
-					String key = StringArgumentType.getString(c, "teil");
+					String key = StringArgumentType.getString(c, "part");
 					String hex = StringArgumentType.getString(c, "hex");
 					if (hex.startsWith("#")) hex = hex.substring(1);
 					if (!Palette.KEYS.contains(key)) {
-						say(c, "Teil muss eines von " + Palette.KEYS + " sein.");
+						say(c, Lang.t("cmd.color_part", Palette.KEYS.toString()));
 						return 0;
 					}
 					if (!hex.matches("[0-9a-fA-F]{6}")) {
-						say(c, "Farbe als 6-stelliger Hex-Wert angeben, z. B. FF8800.");
+						say(c, Lang.t("cmd.color_hex"));
 						return 0;
 					}
-					ensureCustom();
+					Palette.ensureCustom(Bingo.cfg);
 					Bingo.cfg.custom.put(key, hex.toUpperCase());
 					Bingo.cfg.theme = "custom";
 					saveCfg();
-					say(c, "Farbe '" + key + "' = #" + hex.toUpperCase() + " (Design: custom).");
+					say(c, Lang.t("cmd.color_set", key, hex.toUpperCase()));
 					return 1;
 				}))));
 
 		// --- HUD-Fenster zum Verschieben und Skalieren
-		root.then(lit("gui").executes(c -> openMover(c)));
-		root.then(lit("move").executes(c -> openMover(c)));
+		root.then(lit("gui").executes(c -> openMover()));
+		root.then(lit("move").executes(c -> openMover()));
 
 		// --- HUD
 		root.then(lit("hud")
 			.then(lit("show").executes(c -> {
 				Bingo.cfg.hudVisible = true;
 				saveCfg();
-				say(c, "HUD sichtbar.");
+				say(c, Lang.t("cmd.hud_shown"));
 				return 1;
 			}))
 			.then(lit("hide").executes(c -> {
 				Bingo.cfg.hudVisible = false;
 				saveCfg();
-				say(c, "HUD versteckt.");
+				say(c, Lang.t("cmd.hud_hidden"));
 				return 1;
 			}))
 			.then(lit("pos").then(arg("x", IntegerArgumentType.integer(0, 4000))
@@ -244,35 +259,35 @@ public final class BingoCommands {
 					Bingo.cfg.hudX = IntegerArgumentType.getInteger(c, "x");
 					Bingo.cfg.hudY = IntegerArgumentType.getInteger(c, "y");
 					saveCfg();
-					say(c, "HUD-Position: " + Bingo.cfg.hudX + ", " + Bingo.cfg.hudY);
+					say(c, Lang.t("cmd.hud_pos", Bingo.cfg.hudX, Bingo.cfg.hudY));
 					return 1;
 				}))))
 			.then(lit("cell").then(arg("px", IntegerArgumentType.integer(24, 100)).executes(c -> {
 				Bingo.cfg.cell = IntegerArgumentType.getInteger(c, "px");
 				saveCfg();
-				say(c, "Feldgroesse: " + Bingo.cfg.cell + " (wird bei kleinen Fenstern automatisch verkleinert).");
+				say(c, Lang.t("cmd.hud_cell", Bingo.cfg.cell));
 				return 1;
 			}))));
 
 		// --- Spiel
 		root.then(lit("solo").executes(c -> {
 			Bingo.startSolo();
-			say(c, "Solo-Modus. Starte mit /sbb start.");
+			say(c, Lang.t("cmd.solo"));
 			return 1;
 		}));
 		root.then(lit("host").executes(c -> {
 			String code = Bingo.startHost();
-			say(c, "Party-Code: " + code + "  (Mitspieler tippt /sbb join " + code + ")");
+			say(c, Lang.t("cmd.host", code, code));
 			return 1;
 		}));
 		root.then(lit("join").then(arg("code", StringArgumentType.word()).executes(c -> {
 			String code = StringArgumentType.getString(c, "code").trim();
 			if (code.length() != 6) {
-				say(c, "Der Party-Code hat 6 Zeichen.");
+				say(c, Lang.t("game.code_len"));
 				return 0;
 			}
 			Bingo.join(code);
-			say(c, "Verbinde mit Party " + code.toUpperCase() + " ...");
+			say(c, Lang.t("game.joining", code.toUpperCase()));
 			return 1;
 		})));
 		root.then(lit("start").executes(c -> {
@@ -281,7 +296,7 @@ public final class BingoCommands {
 				say(c, err);
 				return 0;
 			}
-			say(c, "Runde gestartet. Felder abhaken mit /sbb mark <nr>.");
+			say(c, Lang.t("cmd.started"));
 			return 1;
 		}));
 		root.then(lit("mark").then(arg("nr", IntegerArgumentType.integer(1, 49)).executes(c -> {
@@ -294,84 +309,72 @@ public final class BingoCommands {
 		})));
 		root.then(lit("end").executes(c -> {
 			Bingo.endGame();
-			say(c, "Runde beendet.");
+			say(c, Lang.t("game.ended"));
 			return 1;
 		}));
 		root.then(lit("leave").executes(c -> {
 			Bingo.leave();
-			say(c, "Spiel verlassen.");
+			say(c, Lang.t("game.left"));
 			return 1;
 		}));
 		root.then(lit("status").executes(c -> {
-			say(c, "Rolle: " + Bingo.role + (Bingo.code.isEmpty() ? "" : ", Code " + Bingo.code)
-				+ ", Goals: " + Bingo.cfg.goals.size() + " / " + Bingo.needed()
-				+ ", Board " + Bingo.cfg.size + "x" + Bingo.cfg.size + (Bingo.cfg.lockout ? " Lockout" : "")
-				+ ", Design " + Bingo.cfg.theme);
+			String mode = Lang.t(switch (Bingo.role) {
+				case NONE -> "mode.none";
+				case SOLO -> "mode.solo";
+				case HOST -> "mode.host";
+				case GUEST -> "mode.guest";
+			});
+			say(c, Lang.t("cmd.status", mode, Bingo.code.isEmpty() ? "" : " (" + Bingo.code + ")",
+				Bingo.cfg.goals.size(), Bingo.needed(), Bingo.cfg.size, Bingo.cfg.size,
+				Bingo.cfg.lockout ? " Lockout" : "", Bingo.cfg.theme, Lang.languageName()));
 			return 1;
 		}));
 
 		d.register(root);
 	}
 
-	private static int openMover(CommandContext<FabricClientCommandSource> c) {
+	private static int openMover() {
 		Bingo.cfg.hudVisible = true;
 		Bingo.open(MoverScreen::new);
 		return 1;
 	}
 
-	private static int openMenu(CommandContext<FabricClientCommandSource> c) {
+	private static int openMenu() {
 		Bingo.open(ConfigScreen::new);
 		return 1;
 	}
 
-	private static int openBoard(CommandContext<FabricClientCommandSource> c) {
-		Bingo.open(BoardScreen::new);
-		return 1;
-	}
-
 	private static int help(CommandContext<FabricClientCommandSource> c) {
-		say(c, "Befehle (/sbb ...):");
-		plain(c, " (ohne Zusatz) oder menu  - Einstellungsmenue, hier ist alles einstellbar");
-		plain(c, " board  - Board-Fenster, Felder per Mausklick abhaken");
-		plain(c, " gui  - Fenster zum Verschieben (ziehen) und Skalieren (Mausrad) des Boards");
-		plain(c, " solo | host | join <code> | start | end | leave | status");
-		plain(c, " mark <nr>  - Feld abhaken oder wieder entfernen (Nummer steht im Feld)");
-		plain(c, " goal add <text>  (mehrere mit ; trennen) | goal remove <nr> | goal list [seite] | goal clear | goal example");
-		plain(c, " list save|load|delete <name> | list show  - Goal-Listen speichern");
-		plain(c, " size <3-7> | lockout <true|false> | name <name>");
-		plain(c, " theme dark|light|custom | color <teil> <hex>");
-		plain(c, " hud show|hide | hud pos <x> <y> | hud cell <px>");
+		say(c, Lang.t("help.title"));
+		for (String k : List.of("help.menu", "help.board", "help.gui", "help.game", "help.mark", "help.goal",
+			"help.list", "help.settings", "help.theme", "help.hud")) {
+			plain(c, Lang.t(k));
+		}
 		return 1;
 	}
 
 	private static int listGoals(CommandContext<FabricClientCommandSource> c, int page) {
 		List<String> goals = Bingo.cfg.goals;
 		if (goals.isEmpty()) {
-			say(c, "Noch keine Goals. Mit /sbb goal add <text> oder /sbb goal example anlegen.");
+			say(c, Lang.t("cmd.no_goals_list"));
 			return 1;
 		}
 		int per = 10;
 		int pages = (goals.size() + per - 1) / per;
 		int p = Math.min(page, pages);
-		say(c, "Goals (Seite " + p + "/" + pages + ", gesamt " + goals.size() + ", benoetigt " + Bingo.needed() + "):");
+		say(c, Lang.t("cmd.goals_header", p, pages, goals.size(), Bingo.needed()));
 		for (int i = (p - 1) * per; i < Math.min(goals.size(), p * per); i++) {
 			plain(c, " " + (i + 1) + ". " + goals.get(i));
 		}
 		return 1;
 	}
 
-	private static void ensureCustom() {
-		if (Bingo.cfg.custom.isEmpty()) {
-			Palette cur = Palette.of(Bingo.cfg);
-			for (String k : Palette.KEYS) Bingo.cfg.custom.put(k, Palette.hexOf(cur, k));
-		}
-	}
-
 	private static int setTheme(CommandContext<FabricClientCommandSource> c, String theme) {
-		if (theme.equals("custom")) ensureCustom();
+		if (theme.equals("custom")) Palette.ensureCustom(Bingo.cfg);
 		Bingo.cfg.theme = theme;
 		saveCfg();
-		say(c, "Design: " + theme + (theme.equals("custom") ? " (Farben aendern mit /sbb color <teil> <hex>)" : ""));
+		String name = Lang.t(theme.equals("light") ? "theme.light" : theme.equals("custom") ? "theme.custom_long" : "theme.dark");
+		say(c, Lang.t("cmd.theme", name) + (theme.equals("custom") ? Lang.t("cmd.theme_custom_hint") : ""));
 		return 1;
 	}
 }
