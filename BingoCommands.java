@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 /** Alle Befehle unter /sbb (bewusst nicht /bingo, das gehoert Hypixel). */
 public final class BingoCommands {
-	private static final List<String> EXAMPLES = List.of(
+	static final List<String> EXAMPLES = List.of(
 		"Besiege 25 Zombies", "Besiege 15 Spinnen", "Besiege 10 Endermen", "Besiege einen Boss", "Besiege 20 Skelette",
 		"Fische 20 Items", "Fische 5 Seemonster", "Baue 64 Kohle ab", "Baue 32 Eisenerz ab", "Baue 16 Diamanten ab",
 		"Ernte 100 Weizen", "Ernte 64 Karotten", "Ernte 50 Kuerbisse", "Baue 64 Holz ab", "Faelle 50 Baeume",
@@ -71,7 +71,9 @@ public final class BingoCommands {
 	private static void register(CommandDispatcher<FabricClientCommandSource> d) {
 		LiteralArgumentBuilder<FabricClientCommandSource> root = lit("sbb");
 
-		root.executes(c -> help(c));
+		root.executes(c -> openMenu(c));
+		root.then(lit("menu").executes(c -> openMenu(c)));
+		root.then(lit("board").executes(c -> openBoard(c)));
 		root.then(lit("help").executes(c -> help(c)));
 
 		// --- Goals
@@ -219,6 +221,10 @@ public final class BingoCommands {
 					return 1;
 				}))));
 
+		// --- HUD-Fenster zum Verschieben und Skalieren
+		root.then(lit("gui").executes(c -> openMover(c)));
+		root.then(lit("move").executes(c -> openMover(c)));
+
 		// --- HUD
 		root.then(lit("hud")
 			.then(lit("show").executes(c -> {
@@ -307,8 +313,27 @@ public final class BingoCommands {
 		d.register(root);
 	}
 
+	private static int openMover(CommandContext<FabricClientCommandSource> c) {
+		Bingo.cfg.hudVisible = true;
+		Bingo.open(MoverScreen::new);
+		return 1;
+	}
+
+	private static int openMenu(CommandContext<FabricClientCommandSource> c) {
+		Bingo.open(ConfigScreen::new);
+		return 1;
+	}
+
+	private static int openBoard(CommandContext<FabricClientCommandSource> c) {
+		Bingo.open(BoardScreen::new);
+		return 1;
+	}
+
 	private static int help(CommandContext<FabricClientCommandSource> c) {
 		say(c, "Befehle (/sbb ...):");
+		plain(c, " (ohne Zusatz) oder menu  - Einstellungsmenue, hier ist alles einstellbar");
+		plain(c, " board  - Board-Fenster, Felder per Mausklick abhaken");
+		plain(c, " gui  - Fenster zum Verschieben (ziehen) und Skalieren (Mausrad) des Boards");
 		plain(c, " solo | host | join <code> | start | end | leave | status");
 		plain(c, " mark <nr>  - Feld abhaken oder wieder entfernen (Nummer steht im Feld)");
 		plain(c, " goal add <text>  (mehrere mit ; trennen) | goal remove <nr> | goal list [seite] | goal clear | goal example");

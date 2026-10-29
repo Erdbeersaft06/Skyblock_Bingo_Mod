@@ -3,12 +3,14 @@ package dev.skyblockbingo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /** Spiellogik und Multiplayer-Ablauf. Alles hier laeuft auf dem Client-Thread. */
 public final class Bingo {
@@ -32,6 +34,14 @@ public final class Bingo {
 	private static String guestId = null;
 	private static int round = 0;
 	private static long joinDeadline = 0;
+	/** Fenster, das nach ein paar Ticks geoeffnet wird (der Chat muss sich vorher schliessen). */
+	public static Supplier<Screen> pendingScreen = null;
+	public static int pendingDelay = 0;
+
+	public static void open(Supplier<Screen> screen) {
+		pendingScreen = screen;
+		pendingDelay = 3;
+	}
 
 	private Bingo() {}
 
@@ -44,7 +54,7 @@ public final class Bingo {
 	}
 
 	/** Nachricht im Chat anzeigen (von jedem Thread aus). */
-		public static void chat(String text) {
+	public static void chat(String text) {
 		Minecraft mc = Minecraft.getInstance();
 		Component msg = Component.literal("[Bingo] " + text);
 		mc.execute(() -> {

@@ -29,6 +29,8 @@ public final class BingoHud {
 		if (!cfg.hudVisible || Bingo.role == Bingo.Role.NONE) return;
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
+		// Waehrend das Verschieben-Fenster offen ist, zeichnet es das Board selbst
+		if (mc.gui.screen() instanceof MoverScreen || mc.gui.screen() instanceof BoardScreen) return;
 		Font font = mc.font;
 		Palette pal = Palette.of(cfg);
 
@@ -38,6 +40,46 @@ public final class BingoHud {
 			return;
 		}
 		drawBoard(g, mc, font, pal, game, cfg);
+	}
+
+	/** Liefert {Feldgroesse, Breite, Hoehe} des Boards in GUI-Pixeln. */
+	static int[] measure(Font font, int n, boolean over, Config cfg) {
+		int gap = 2;
+		int pad = 4;
+		int lh = font.lineHeight + 1;
+		int headerH = lh * 2 + 3;
+		int bannerH = over ? lh + 7 : 0;
+		int cell = Math.max(20, cfg.cell);
+		int bw = n * cell + (n - 1) * gap;
+		return new int[] {cell, bw + pad * 2, pad + headerH + bw + pad + bannerH};
+	}
+
+	/** Index des Feldes unter dem Mauszeiger oder -1. */
+	static int cellAt(Minecraft mc, Font font, Game game, Config cfg, double mx, double my) {
+		int n = game.size;
+		int gap = 2;
+		int pad = 4;
+		int lh = font.lineHeight + 1;
+		int headerH = lh * 2 + 3;
+		int[] ms = measure(font, n, game.over, cfg);
+		int[] pos = position(mc, ms[1], ms[2], cfg);
+		int gx = pos[0] + pad;
+		int gy = pos[1] + pad + headerH;
+		for (int i = 0; i < n * n; i++) {
+			int cx = gx + (i % n) * (ms[0] + gap);
+			int cy = gy + (i / n) * (ms[0] + gap);
+			if (mx >= cx && mx < cx + ms[0] && my >= cy && my < cy + ms[0]) return i;
+		}
+		return -1;
+	}
+
+	/** Position des Boards, so begrenzt dass es immer ganz im Fenster bleibt. */
+	static int[] position(Minecraft mc, int pw, int ph, Config cfg) {
+		int gw = mc.getWindow().getGuiScaledWidth();
+		int gh = mc.getWindow().getGuiScaledHeight();
+		int x = Math.max(0, Math.min(cfg.hudX, gw - pw));
+		int y = Math.max(0, Math.min(cfg.hudY, gh - ph));
+		return new int[] {x, y};
 	}
 
 	private static void drawLobby(GuiGraphicsExtractor g, Font font, Palette pal, int x, int y) {
@@ -75,23 +117,22 @@ public final class BingoHud {
 		}
 	}
 
-	private static void drawBoard(GuiGraphicsExtractor g, Minecraft mc, Font font, Palette pal, Game game, Config cfg) {
+	static void drawBoard(GuiGraphicsExtractor g, Minecraft mc, Font font, Palette pal, Game game, Config cfg) {
 		final int n = game.size;
 		final int gap = 2;
 		final int pad = 4;
 		final int lh = font.lineHeight + 1;
-		final int x = cfg.hudX;
-		final int y = cfg.hudY;
 
 		int headerH = lh * 2 + 3;
 		int bannerH = game.over ? lh + 7 : 0;
-		int guiH = mc.getWindow().getGuiScaledHeight();
-		int avail = guiH - y - pad * 2 - headerH - bannerH - 4 - gap * (n - 1);
-		int cell = Math.max(20, Math.min(cfg.cell, avail / n));
-
+		int[] ms = measure(font, n, game.over, cfg);
+		int cell = ms[0];
+		int pw = ms[1];
+		int ph = ms[2];
 		int bw = n * cell + (n - 1) * gap;
-		int pw = bw + pad * 2;
-		int ph = pad + headerH + bw + pad + bannerH;
+		int[] pos = position(mc, pw, ph, cfg);
+		final int x = pos[0];
+		final int y = pos[1];
 
 		g.fill(x, y, x + pw, y + ph, pal.bg());
 		g.outline(x, y, pw, ph, pal.border());

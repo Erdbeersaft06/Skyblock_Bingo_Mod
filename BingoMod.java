@@ -19,6 +19,13 @@ public final class BingoMod implements ClientModInitializer {
 			Identifier.fromNamespaceAndPath(MOD_ID, "board"),
 			BingoHud::extract);
 
-		ClientTickEvents.END_CLIENT_TICK.register(client -> Bingo.tick());
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			Bingo.tick();
+			if (Bingo.pendingScreen != null && --Bingo.pendingDelay <= 0) {
+				var screen = Bingo.pendingScreen.get();
+				Bingo.pendingScreen = null;
+				client.gui.setScreen(screen);
+			}
+		});
 	}
 }

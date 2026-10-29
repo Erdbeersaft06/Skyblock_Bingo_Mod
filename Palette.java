@@ -33,6 +33,27 @@ public record Palette(int bg, int cell, int text, int muted, int p0, int p1, int
 		return String.format("%06X", v & 0xFFFFFF);
 	}
 
+	/** Fuellt die eigenen Farben mit den aktuellen, falls noch keine gespeichert sind. */
+	public static void ensureCustom(Config c) {
+		if (c.custom.isEmpty()) {
+			Palette cur = of(c);
+			for (String k : KEYS) c.custom.put(k, hexOf(cur, k));
+		}
+	}
+
+	/** Farbe (ARGB) eines Teils der Palette. */
+	public int colorOf(String key) {
+		return switch (key) {
+			case "bg" -> bg;
+			case "cell" -> cell;
+			case "text" -> text;
+			case "muted" -> muted;
+			case "p0" -> p0;
+			case "p1" -> p1;
+			default -> border;
+		};
+	}
+
 	private static Palette custom(Config c) {
 		Palette d = DARK;
 		return new Palette(
