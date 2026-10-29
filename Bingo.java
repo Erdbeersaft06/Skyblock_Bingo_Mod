@@ -44,11 +44,19 @@ public final class Bingo {
 	}
 
 	/** Nachricht im Chat anzeigen (von jedem Thread aus). */
-	public static void chat(String text) {
+		public static void chat(String text) {
 		Minecraft mc = Minecraft.getInstance();
+		Component msg = Component.literal("[Bingo] " + text);
 		mc.execute(() -> {
-			if (mc.player != null) {
-				mc.player.displayClientMessage(Component.literal("[Bingo] " + text), false);
+			if (mc.player == null) return;
+			// Methodennamen aendern sich zwischen Versionen, deshalb mehrere Varianten probieren
+			for (String name : new String[] {"sendSystemMessage", "sendOverlayMessage"}) {
+				try {
+					mc.player.getClass().getMethod(name, Component.class).invoke(mc.player, msg);
+					return;
+				} catch (ReflectiveOperationException ignored) {
+					// naechste Variante probieren
+				}
 			}
 		});
 	}
