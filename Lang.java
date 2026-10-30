@@ -255,6 +255,12 @@ public final class Lang {
 		add("color.muted", "Nebentext", "Subtext", "Sous-texte", "Subtexto");
 		add("color.border", "Rahmen", "Border", "Bordure", "Borde");
 
+		add("picker.title", "Farbe wählen: %s", "Pick a color: %s", "Choisir la couleur : %s", "Elegir color: %s");
+		add("picker.hint", "Klicke oder ziehe im Farbfeld und in der Farbleiste.",
+			"Click or drag in the color field and the color bar.",
+			"Clique ou glisse dans le champ de couleur et la barre.",
+			"Haz clic o arrastra en el campo de color y en la barra.");
+
 		// ---- Menue: Spiel
 		add("game.solo", "Alleine spielen", "Play solo", "Jouer seul", "Jugar solo");
 		add("game.host", "Party erstellen", "Create party", "Créer une partie", "Crear partida");

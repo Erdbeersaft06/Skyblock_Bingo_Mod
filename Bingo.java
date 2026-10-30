@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -154,7 +155,10 @@ public final class Bingo {
 
 	/** Jedes Bild aufrufen: Ein Linksklick auf das HUD-Board waehrend das Inventar offen ist hakt das Feld ab. */
 	public static void pollMouse(Minecraft mc) {
-		boolean down = mc.mouseHandler.isLeftPressed();
+		// MouseHandler.isLeftPressed() wird bei offenem Fenster nicht aktualisiert, deshalb direkt bei GLFW nachfragen
+		long window = GLFW.glfwGetCurrentContext();
+		if (window == 0L) return;
+		boolean down = GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
 		boolean click = down && !wasDown;
 		wasDown = down;
 		if (!click || !cfg.inventoryClick || !cfg.hudVisible || game == null || game.over) return;

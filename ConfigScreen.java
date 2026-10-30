@@ -104,7 +104,7 @@ public final class ConfigScreen extends Screen {
 		return Lang.t(b ? "onoff.on" : "onoff.off");
 	}
 
-	private static String colorLabel(String key) {
+	static String colorLabel(String key) {
 		return switch (key) {
 			case "p0" -> Lang.t("player1");
 			case "p1" -> Lang.t("player2");
@@ -314,9 +314,14 @@ public final class ConfigScreen extends Screen {
 					cfg.theme = "custom";
 				}
 			});
+			// Anklickbares Farbfeld: oeffnet den Farbwaehler
+			this.addRenderableWidget(Button.builder(Component.empty(), b -> {
+				cfg.save();
+				this.minecraft.gui.setScreen(new ColorPickerScreen(this, key));
+			}).bounds(cx + 132, y + 2, 18, 16).build());
 			i++;
 		}
-		button(Lang.t("gen.mover"), x0, 190, W, () -> {
+		button(Lang.t("gen.mover"), x0, 200, W, () -> {
 			cfg.save();
 			this.minecraft.gui.setScreen(new MoverScreen());
 		});
@@ -428,11 +433,11 @@ public final class ConfigScreen extends Screen {
 					int y = 78 + (i % 4) * 26;
 					text(g, colorLabel(key), cx, y + 6, WHITE);
 					int col = 0xFF000000 | (pal.colorOf(key) & 0xFFFFFF);
-					g.fill(cx + 134, y + 3, cx + 148, y + 17, col);
-					g.outline(cx + 134, y + 3, 14, 14, 0xFFFFFFFF);
+					g.fill(cx + 133, y + 3, cx + 149, y + 17, col);
+					g.outline(cx + 132, y + 2, 18, 16, 0xFFFFFFFF);
 					i++;
 				}
-				text(g, cut(Lang.t("design.hex"), W), x0, 168, GRAY);
+				text(g, cut(Lang.t("design.hex"), W), x0, 184, GRAY);
 			}
 			case SPIEL -> {
 				text(g, Lang.t("game.code"), x0, 76, WHITE);
