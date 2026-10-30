@@ -189,14 +189,6 @@ public final class BingoCommands {
 			say(c, Lang.t("cmd.lockout", onOff(Bingo.cfg.lockout)));
 			return 1;
 		})));
-		root.then(lit("name").then(arg("name", StringArgumentType.greedyString()).executes(c -> {
-			String n = StringArgumentType.getString(c, "name").trim();
-			if (n.length() > 20) n = n.substring(0, 20);
-			Bingo.cfg.name = n;
-			saveCfg();
-			say(c, Lang.t("cmd.name", n));
-			return 1;
-		})));
 		root.then(lit("lang").then(arg("code", StringArgumentType.word()).suggests(BingoCommands::langCodes).executes(c -> {
 			String code = StringArgumentType.getString(c, "code").toLowerCase();
 			if (!Lang.CODES.contains(code)) {

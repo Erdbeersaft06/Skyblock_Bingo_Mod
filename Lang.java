@@ -191,7 +191,7 @@ public final class Lang {
 		add("gen.invclick", "Klick im Inventar: %s", "Click in inventory: %s", "Clic dans l'inventaire : %s",
 			"Clic en el inventario: %s");
 		add("gen.lang", "Sprache: %s", "Language: %s", "Langue : %s", "Idioma: %s");
-		add("gen.name", "Dein Name:", "Your name:", "Ton nom :", "Tu nombre:");
+		add("gen.name", "Dein IGN:", "Your IGN:", "Ton pseudo :", "Tu nick:");
 		add("gen.mover", "HUD verschieben / Größe", "Move HUD / size", "Déplacer le HUD / taille", "Mover HUD / tamaño");
 		add("gen.openboard", "Board öffnen (abhaken)", "Open board (mark)", "Ouvrir le tableau (cocher)",
 			"Abrir tablero (marcar)");

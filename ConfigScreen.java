@@ -150,8 +150,6 @@ public final class ConfigScreen extends Screen {
 			this.rebuildWidgets();
 		});
 
-		nameBox = box(x0 + 110, 122, W - 110, cfg.name, 20, s -> cfg.name = s.trim());
-
 		button(Lang.t("gen.mover"), x0, 148, half, () -> {
 			cfg.save();
 			this.minecraft.gui.setScreen(new MoverScreen());
@@ -393,6 +391,7 @@ public final class ConfigScreen extends Screen {
 			case ALLGEMEIN -> {
 				text(g, Lang.t("gen.size", cfg.size, cfg.size), x0, 50, WHITE);
 				text(g, Lang.t("gen.name"), x0, 128, WHITE);
+				text(g, Bingo.ign(), x0 + 110, 128, 0xFF55FF55);
 				text(g, Lang.t("gen.goals", cfg.goals.size(), Bingo.needed()), x0, 180, GRAY);
 				text(g, Lang.t("gen.nextround"), x0, 192, GRAY);
 				text(g, Lang.t("gen.invhint"), x0, 204, GRAY);

@@ -73,8 +73,19 @@ public final class Bingo {
 		});
 	}
 
+	/** Ingame-Name des Spielers (IGN). */
+	public static String ign() {
+		try {
+			String n = Minecraft.getInstance().getUser().getName();
+			if (n != null && !n.isBlank()) return n;
+		} catch (Throwable ignored) {
+			// Fallback unten
+		}
+		return Lang.t(role == Role.GUEST ? "player2" : "player1");
+	}
+
 	private static String myName() {
-		return cfg.name.isBlank() ? Lang.t(role == Role.GUEST ? "player2" : "player1") : cfg.name;
+		return ign();
 	}
 
 	public static int needed() {
