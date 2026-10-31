@@ -328,6 +328,7 @@ public final class ConfigScreen extends Screen {
 	// ---------------------------------------------------------------- Reiter: Spiel
 
 	private void buildGame() {
+		Config cfg = Bingo.cfg;
 		int half = (W - 8) / 2;
 		button(Lang.t("game.solo"), x0, 44, half, () -> {
 			Bingo.startSolo();
