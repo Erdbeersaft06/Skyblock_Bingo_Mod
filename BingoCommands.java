@@ -288,7 +288,11 @@ public final class BingoCommands {
 				say(c, Lang.t("game.code_len"));
 				return 0;
 			}
-			Bingo.join(code);
+			String err = Bingo.join(code);
+			if (err != null) {
+				say(c, err);
+				return 0;
+			}
 			say(c, Lang.t("game.joining", code.toUpperCase()));
 			return 1;
 		})));

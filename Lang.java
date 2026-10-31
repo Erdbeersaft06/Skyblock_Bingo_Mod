@@ -266,6 +266,7 @@ public final class Lang {
 		add("lobby.loading", "Lade Lobbys …", "Loading lobbies …", "Chargement …", "Cargando …");
 		add("lobby.none", "Keine offenen Lobbys gefunden.", "No open lobbies found.", "Aucun salon ouvert.", "No hay salas abiertas.");
 		add("lobby.error", "Fehler beim Laden (%s)", "Failed to load (%s)", "Échec du chargement (%s)", "Error al cargar (%s)");
+		add("err.ownparty", "Du kannst deiner eigenen Party nicht beitreten.", "You can't join your own party.", "Tu ne peux pas rejoindre ta propre partie.", "No puedes unirte a tu propia partida.");
 		add("picker.title", "Farbe wählen: %s", "Pick a color: %s", "Choisir la couleur : %s", "Elegir color: %s");
 		add("picker.hint", "Klicke oder ziehe im Farbfeld und in der Farbleiste.",
 			"Click or drag in the color field and the color bar.",

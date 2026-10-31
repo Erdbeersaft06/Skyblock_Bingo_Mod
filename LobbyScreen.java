@@ -34,6 +34,7 @@ public final class LobbyScreen extends Screen {
 		String f = filter.toLowerCase(Locale.ROOT);
 		List<Directory.Entry> out = new ArrayList<>();
 		for (Directory.Entry e : all) {
+			if (Bingo.role == Bingo.Role.HOST && e.code().equalsIgnoreCase(Bingo.code)) continue;
 			if (f.isEmpty() || e.host().toLowerCase(Locale.ROOT).contains(f)) out.add(e);
 		}
 		return out;
@@ -80,7 +81,10 @@ public final class LobbyScreen extends Screen {
 			if (idx >= list.size()) break;
 			Directory.Entry e = list.get(idx);
 			this.addRenderableWidget(Button.builder(Component.literal(Lang.t("lobby.join")), b -> {
-				Bingo.join(e.code());
+				String err = Bingo.join(e.code());
+				if (err != null) {
+					Bingo.chat(err);
+				}
 				this.minecraft.gui.setScreen(parent);
 			}).bounds(x0 + w - 70, 62 + i * ROW_H, 70, 20).build());
 		}

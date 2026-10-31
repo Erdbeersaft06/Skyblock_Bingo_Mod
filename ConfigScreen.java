@@ -346,8 +346,8 @@ public final class ConfigScreen extends Screen {
 				setStatus(Lang.t("game.code_len"));
 				return;
 			}
-			Bingo.join(c);
-			setStatus(Lang.t("game.joining", c.toUpperCase()));
+			String err = Bingo.join(c);
+			setStatus(err != null ? err : Lang.t("game.joining", c.toUpperCase()));
 		});
 
 		int third = (W - 12) / 3;

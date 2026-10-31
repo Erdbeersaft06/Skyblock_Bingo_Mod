@@ -116,7 +116,9 @@ public final class Bingo {
 		names[0] = myName();
 	}
 
-	public static void join(String c) {
+	/** Tritt einer Party bei. Gibt eine Fehlermeldung zurueck oder null. */
+	public static String join(String c) {
+		if (role == Role.HOST && c.equalsIgnoreCase(code)) return Lang.t("err.ownparty");
 		leave();
 		role = Role.GUEST;
 		myIdx = 1;
@@ -129,6 +131,7 @@ public final class Bingo {
 		hello.addProperty("name", names[1]);
 		net.send(hello);
 		joinDeadline = System.currentTimeMillis() + 15000;
+		return null;
 	}
 
 	public static void leave() {
