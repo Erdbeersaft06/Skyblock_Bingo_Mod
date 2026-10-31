@@ -272,6 +272,16 @@ public final class BingoCommands {
 			say(c, Lang.t("cmd.host", code, code));
 			return 1;
 		}));
+		root.then(lit("public").then(arg("on", BoolArgumentType.bool()).executes(c -> {
+			Bingo.cfg.publicLobby = BoolArgumentType.getBool(c, "on");
+			saveCfg();
+			say(c, Lang.t("cmd.public", onOff(Bingo.cfg.publicLobby)));
+			return 1;
+		})));
+		root.then(lit("lobbies").executes(c -> {
+			Bingo.open(() -> new LobbyScreen(null));
+			return 1;
+		}));
 		root.then(lit("join").then(arg("code", StringArgumentType.word()).executes(c -> {
 			String code = StringArgumentType.getString(c, "code").trim();
 			if (code.length() != 6) {

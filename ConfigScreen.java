@@ -367,6 +367,12 @@ public final class ConfigScreen extends Screen {
 			setStatus(Lang.t("game.left"));
 		});
 		button(Lang.t("gen.openboard"), x0, 122, W, () -> this.minecraft.gui.setScreen(new BoardScreen()));
+		button(Lang.t("game.public", Lang.t(cfg.publicLobby ? "onoff.on" : "onoff.off")), x0, 148, half, b -> {
+			cfg.publicLobby = !cfg.publicLobby;
+			cfg.save();
+			b.setMessage(Component.literal(Lang.t("game.public", Lang.t(cfg.publicLobby ? "onoff.on" : "onoff.off"))));
+		});
+		button(Lang.t("game.browse"), x0 + half + 8, 148, half, () -> this.minecraft.gui.setScreen(new LobbyScreen(this)));
 	}
 
 	// ---------------------------------------------------------------- Anzeige
@@ -440,7 +446,7 @@ public final class ConfigScreen extends Screen {
 			}
 			case SPIEL -> {
 				text(g, Lang.t("game.code"), x0, 76, WHITE);
-				int y = 152;
+				int y = 176;
 				String mode = Lang.t(switch (Bingo.role) {
 					case NONE -> "mode.none";
 					case SOLO -> "mode.solo";

@@ -255,6 +255,17 @@ public final class Lang {
 		add("color.muted", "Nebentext", "Subtext", "Sous-texte", "Subtexto");
 		add("color.border", "Rahmen", "Border", "Bordure", "Borde");
 
+		add("game.public", "Öffentlich: %s", "Public: %s", "Public : %s", "Pública: %s");
+		add("game.browse", "Lobbys suchen", "Find lobbies", "Chercher des salons", "Buscar salas");
+		add("cmd.public", "Öffentliche Lobby: %s", "Public lobby: %s", "Salon public : %s", "Sala pública: %s");
+		add("lobby.title", "Öffentliche Lobbys", "Public lobbies", "Salons publics", "Salas públicas");
+		add("lobby.search", "Host suchen …", "Search host …", "Chercher un hôte …", "Buscar anfitrión …");
+		add("lobby.refresh", "Aktualisieren", "Refresh", "Actualiser", "Actualizar");
+		add("lobby.join", "Beitreten", "Join", "Rejoindre", "Unirse");
+		add("lobby.back", "Zurück", "Back", "Retour", "Volver");
+		add("lobby.loading", "Lade Lobbys …", "Loading lobbies …", "Chargement …", "Cargando …");
+		add("lobby.none", "Keine offenen Lobbys gefunden.", "No open lobbies found.", "Aucun salon ouvert.", "No hay salas abiertas.");
+		add("lobby.error", "Fehler beim Laden (%s)", "Failed to load (%s)", "Échec du chargement (%s)", "Error al cargar (%s)");
 		add("picker.title", "Farbe wählen: %s", "Pick a color: %s", "Choisir la couleur : %s", "Elegir color: %s");
 		add("picker.hint", "Klicke oder ziehe im Farbfeld und in der Farbleiste.",
 			"Click or drag in the color field and the color bar.",

@@ -101,6 +101,7 @@ public final class Bingo {
 		names[0] = myName();
 		names[1] = Lang.t("player2");
 		code = randomString(6, CODE_CHARS);
+		lastAd = 0;
 		connected = false;
 		guestId = null;
 		net = new Net(code, o -> Minecraft.getInstance().execute(() -> handle(o)), Bingo::chat);
@@ -131,6 +132,7 @@ public final class Bingo {
 	}
 
 	public static void leave() {
+		stopAd();
 		if (net != null) {
 			if (role == Role.HOST && game != null) net.send(msg("lobby"));
 			net.close();
@@ -145,7 +147,25 @@ public final class Bingo {
 	}
 
 	/** Wird jeden Client-Tick aufgerufen. */
+	private static long lastAd = 0;
+	private static boolean advertised = false;
+
+	private static void stopAd() {
+		if (advertised && !code.isEmpty()) Directory.close(code);
+		advertised = false;
+	}
+
 	public static void tick() {
+		if (role == Role.HOST && cfg.publicLobby && !connected) {
+			long now = System.currentTimeMillis();
+			if (now - lastAd > 20000) {
+				lastAd = now;
+				advertised = true;
+				Directory.advertise(code, names[0], cfg.size, cfg.lockout);
+			}
+		} else if (advertised) {
+			stopAd();
+		}
 		if (role == Role.GUEST && !connected && joinDeadline > 0 && System.currentTimeMillis() > joinDeadline) {
 			chat(Lang.t("msg.nohost"));
 			leave();

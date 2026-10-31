@@ -35,6 +35,8 @@ public final class Config {
 	public String lang = "de";
 	/** Im Inventar (E) direkt auf das Board klicken */
 	public boolean inventoryClick = true;
+	/** Party im oeffentlichen Lobby-Verzeichnis anzeigen */
+	public boolean publicLobby = false;
 
 	private static Path path() {
 		return FabricLoader.getInstance().getConfigDir().resolve("skyblockbingo.json");
